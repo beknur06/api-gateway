@@ -34,7 +34,7 @@ clickhouse:
 
 gateway:
   cors:
-    allowed-origins: *
+    allowed-origins: "*"
 
 management:
   endpoints:
