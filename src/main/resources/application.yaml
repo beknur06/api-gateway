@@ -27,7 +27,7 @@ server:
   port: 8080
 
 clickhouse:
-  url: ${SPRING_CLICKHOUSE_URL:jdbc:ch://localhost:8123/digitaltwin?ssl=false&connect_timeout=10000&socket_timeout=300000&compress=0}
+  url: ${SPRING_CLICKHOUSE_URL:jdbc:ch://localhost:8123/digitaltwin?ssl=false&connect_timeout=10000&socket_timeout=300000&compress=0&keep_alive_query=}
   username: ${CLICKHOUSE_USER:app}
   password: ${CLICKHOUSE_PASS:app123}
 
