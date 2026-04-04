@@ -7,12 +7,10 @@ public class HealthSnapshotDto {
     private String timestamp;
     private Double score;
     private String category;
-    private String trend;
 
-    public HealthSnapshotDto(String timestamp, Double score, String category, String trend) {
+    public HealthSnapshotDto(String timestamp, Double score, String category) {
         this.timestamp = timestamp;
         this.score = score;
         this.category = category;
-        this.trend = trend;
     }
 }

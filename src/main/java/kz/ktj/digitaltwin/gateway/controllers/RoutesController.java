@@ -12,18 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 
-/**
- * GET /api/v1/routes — список всех активных маршрутов с текущим состоянием.
- *
- * Этот эндпоинт питает первый экран UI (Routes list):
- *   - Маршрут (Astana → Almaty)
- *   - Locomotive ID
- *   - Текущая позиция на маршруте (%)
- *   - Health score + category
- *   - Скорость, статус
- *
- * Данные берутся из Redis (last_state + health_index).
- */
 @RestController
 @RequestMapping("/api/v1/routes")
 public class RoutesController {

@@ -7,6 +7,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +23,10 @@ public class HealthSnapshotRepository {
 
     public List<HealthSnapshotDto> findHistory(String locomotiveId, Instant from, Instant to) throws Exception {
         String sql = """
-            SELECT snapshot_time, score, category, trend
+            SELECT calculated_at, score, category
             FROM health_snapshots
-            WHERE locomotive_id = ? AND snapshot_time BETWEEN ? AND ?
-            ORDER BY snapshot_time
+            WHERE locomotive_id = ? AND calculated_at BETWEEN ? AND ?
+            ORDER BY calculated_at
             """;
 
         List<HealthSnapshotDto> out = new ArrayList<>();
@@ -34,21 +35,19 @@ public class HealthSnapshotRepository {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, locomotiveId);
-            ps.setObject(2, from);
-            ps.setObject(3, to);
+            ps.setTimestamp(2, Timestamp.from(from));
+            ps.setTimestamp(3, Timestamp.from(to));
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Instant ts = rs.getObject(1, Instant.class);
+                    Timestamp ts = rs.getTimestamp(1);
                     Double score = (Double) rs.getObject(2);
                     String category = rs.getString(3);
-                    String trend = rs.getString(4);
 
                     out.add(new HealthSnapshotDto(
-                            ts != null ? ts.toString() : null,
+                            ts != null ? ts.toInstant().toString() : null,
                             score,
-                            category,
-                            trend
+                            category
                     ));
                 }
             }
@@ -59,10 +58,10 @@ public class HealthSnapshotRepository {
 
     public HealthSnapshotDto findNearest(String locomotiveId, Instant at) throws Exception {
         String sql = """
-            SELECT snapshot_time, score, category, trend
+            SELECT snapshot_time, score, category
             FROM health_snapshots
             WHERE locomotive_id = ?
-            ORDER BY ABS(EXTRACT(EPOCH FROM (snapshot_time - ?::timestamptz))) ASC
+            ORDER BY ABS(EXTRACT(EPOCH FROM (calculated_at - ?::timestamptz))) ASC
             LIMIT 1
             """;
 
@@ -70,21 +69,19 @@ public class HealthSnapshotRepository {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, locomotiveId);
-            ps.setObject(2, at);
+            ps.setTimestamp(2, Timestamp.from(at));
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
 
-                Instant ts = rs.getObject(1, Instant.class);
+                Timestamp ts = rs.getTimestamp(1);
                 Double score = (Double) rs.getObject(2);
                 String category = rs.getString(3);
-                String trend = rs.getString(4);
 
                 return new HealthSnapshotDto(
-                        ts != null ? ts.toString() : null,
+                        ts != null ? ts.toInstant().toString() : null,
                         score,
-                        category,
-                        trend
+                        category
                 );
             }
         }
