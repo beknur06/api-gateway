@@ -34,7 +34,7 @@ clickhouse:
 
 gateway:
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
+    allowed-origins: *
 
 management:
   endpoints:
