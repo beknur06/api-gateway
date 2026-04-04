@@ -87,25 +87,25 @@ public class HistoryController {
             try (Connection conn = clickHouse.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, locomotiveId);
-                ps.setObject(2, java.sql.Timestamp.from(from));
-                ps.setObject(3, java.sql.Timestamp.from(to));
+                ps.setTimestamp(2, java.sql.Timestamp.from(from));
+                ps.setTimestamp(3, java.sql.Timestamp.from(to));
 
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
                     csv.append(rs.getTimestamp(1).toInstant())
-                       .append(",").append(rs.getString(2))
-                       .append(",").append(rs.getDouble(3))
-                       .append(",").append(rs.getString(4))
-                       .append("\n");
+                            .append(",").append(rs.getString(2))
+                            .append(",").append(rs.getDouble(3))
+                            .append(",").append(rs.getString(4))
+                            .append("\n");
                 }
             }
 
             String filename = locomotiveId + "_" + from.toString().replace(":", "-") + ".csv";
 
             return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
-                .contentType(MediaType.parseMediaType("text/csv"))
-                .body(csv.toString());
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                    .contentType(MediaType.parseMediaType("text/csv"))
+                    .body(csv.toString());
 
         } catch (Exception e) {
             log.error("Export failed: {}", e.getMessage());
@@ -131,8 +131,8 @@ public class HistoryController {
         try (Connection conn = clickHouse.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, locomotiveId);
-            ps.setObject(2, java.sql.Timestamp.from(from));
-            ps.setObject(3, java.sql.Timestamp.from(to));
+            ps.setTimestamp(2, java.sql.Timestamp.from(from));
+            ps.setTimestamp(3, java.sql.Timestamp.from(to));
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -161,7 +161,7 @@ public class HistoryController {
             throws Exception {
 
         String sql = """
-            SELECT event_time, param_name, avg_value, min_value, max_value
+            SELECT event_time, param_name, sum_value, min_value, max_value
             FROM telemetry_1min_agg
             WHERE locomotive_id = ? AND event_time BETWEEN ? AND ?
             ORDER BY event_time, param_name
@@ -172,8 +172,8 @@ public class HistoryController {
         try (Connection conn = clickHouse.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, locomotiveId);
-            ps.setObject(2, java.sql.Timestamp.from(from));
-            ps.setObject(3, java.sql.Timestamp.from(to));
+            ps.setTimestamp(2, java.sql.Timestamp.from(from));
+            ps.setTimestamp(3, java.sql.Timestamp.from(to));
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
