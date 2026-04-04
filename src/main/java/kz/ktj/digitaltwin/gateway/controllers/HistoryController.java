@@ -1,4 +1,4 @@
-package kz.ktj.digitaltwin.gateway.controller;
+package kz.ktj.digitaltwin.gateway.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

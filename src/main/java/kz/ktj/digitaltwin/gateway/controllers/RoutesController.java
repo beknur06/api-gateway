@@ -1,4 +1,4 @@
-package kz.ktj.digitaltwin.gateway.controller;
+package kz.ktj.digitaltwin.gateway.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
