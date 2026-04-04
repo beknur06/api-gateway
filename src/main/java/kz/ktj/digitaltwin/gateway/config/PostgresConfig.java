@@ -1,40 +1,28 @@
 package kz.ktj.digitaltwin.gateway.config;
 
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.sql.DataSource;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class PostgresConfig {
 
-    @Value("${postgres.url}")
-    private String url;
-
-    @Value("${postgres.username}")
-    private String username;
-
-    @Value("${postgres.password}")
-    private String password;
-
-    @Value("${postgres.pool.max-size:10}")
-    private int maxPoolSize;
-
-    @Value("${postgres.pool.min-idle:1}")
-    private int minIdle;
+    @Bean
+    @Primary
+    @ConfigurationProperties("spring.datasource")
+    public DataSourceProperties postgresDataSourceProperties() {
+        return new DataSourceProperties();
+    }
 
     @Bean
-    public DataSource postgresDataSource() {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(url);
-        config.setUsername(username);
-        config.setPassword(password);
-        config.setDriverClassName("org.postgresql.Driver");
-        config.setMaximumPoolSize(maxPoolSize);
-        config.setMinimumIdle(minIdle);
-        return new HikariDataSource(config);
+    @Primary
+    @ConfigurationProperties("spring.datasource.hikari")
+    public HikariDataSource postgresDataSource() {
+        return postgresDataSourceProperties().initializeDataSourceBuilder()
+                .type(HikariDataSource.class)
+                .build();
     }
 }

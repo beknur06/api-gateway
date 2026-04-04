@@ -1,6 +1,18 @@
 spring:
   application:
     name: api-gateway
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/telemetry}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -17,14 +29,6 @@ clickhouse:
 gateway:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
-
-postgres:
-  url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/telemetry}
-  username: ${POSTGRES_USER:postgres}
-  password: ${POSTGRES_PASSWORD:postgres}
-  pool:
-    max-size: 10
-    min-idle: 1
 
 management:
   endpoints:
