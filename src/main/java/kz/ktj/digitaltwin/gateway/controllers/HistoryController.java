@@ -1,5 +1,11 @@
 package kz.ktj.digitaltwin.gateway.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -23,6 +29,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/api/v1/history")
+@Tag(name = "History", description = "История телеметрии и экспорт (replay/report)")
 public class HistoryController {
 
     private static final Logger log = LoggerFactory.getLogger(HistoryController.class);
@@ -42,10 +49,24 @@ public class HistoryController {
      * ]
      */
     @GetMapping("/{locomotiveId}")
+    @Operation(
+            summary = "История телеметрии для replay",
+            description = "Возвращает телеметрию по диапазону времени. resolution=raw (покомпонентно) или 1min (агрегация).",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Данные телеметрии (динамические поля параметров)",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = java.util.Map.class))),
+                    @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content)
+            }
+    )
     public ResponseEntity<List<Map<String, Object>>> getHistory(
+            @Parameter(description = "Идентификатор локомотива", example = "L-001", required = true)
             @PathVariable String locomotiveId,
+            @Parameter(description = "Начало интервала (ISO-8601)", example = "2026-01-01T00:00:00Z", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @Parameter(description = "Конец интервала (ISO-8601)", example = "2026-01-01T06:00:00Z", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @Parameter(description = "Разрешение: raw или 1min", example = "raw")
             @RequestParam(defaultValue = "raw") String resolution) {
 
         try {
@@ -68,9 +89,21 @@ public class HistoryController {
      * Downloads CSV file with all parameters for the time window.
      */
     @GetMapping("/{locomotiveId}/export")
+    @Operation(
+            summary = "Экспорт телеметрии в CSV",
+            description = "Возвращает CSV (text/csv) с колонками: timestamp,param_name,value,phase.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "CSV файл", content = @Content(mediaType = "text/csv",
+                            schema = @Schema(type = "string", format = "binary"))),
+                    @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content)
+            }
+    )
     public ResponseEntity<String> export(
+            @Parameter(description = "Идентификатор локомотива", example = "L-001", required = true)
             @PathVariable String locomotiveId,
+            @Parameter(description = "Начало интервала (ISO-8601)", example = "2026-01-01T00:00:00Z", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @Parameter(description = "Конец интервала (ISO-8601)", example = "2026-01-01T06:00:00Z", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
 
         try {

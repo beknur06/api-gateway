@@ -1,5 +1,6 @@
 package kz.ktj.digitaltwin.gateway.services;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import kz.ktj.digitaltwin.gateway.dto.locomotives.CreateLocomotiveRequest;
 import kz.ktj.digitaltwin.gateway.dto.locomotives.UpdateLocomotiveRequest;
 import kz.ktj.digitaltwin.gateway.entities.Locomotive;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Tag(name = "Services", description = "Service слой (не REST). В Swagger UI обычно не отображается.")
 public class LocomotiveService {
 
     private final LocomotiveRepository repo;
@@ -79,4 +81,3 @@ public class LocomotiveService {
         repo.deleteById(id);
     }
 }
-

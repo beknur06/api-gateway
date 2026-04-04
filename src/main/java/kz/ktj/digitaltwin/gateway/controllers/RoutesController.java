@@ -2,6 +2,11 @@ package kz.ktj.digitaltwin.gateway.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -14,6 +19,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/routes")
+@Tag(name = "Routes", description = "Активные маршруты/состояния локомотивов (из Redis)")
 public class RoutesController {
 
     private static final Logger log = LoggerFactory.getLogger(RoutesController.class);
@@ -27,6 +33,15 @@ public class RoutesController {
     }
 
     @GetMapping
+    @Operation(
+            summary = "Список активных маршрутов",
+            description = "Агрегирует текущее состояние из Redis ключей last_state:* и health_index:*.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Список активных маршрутов (JSON с динамическими полями)",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = java.util.Map.class)))
+            }
+    )
     public ResponseEntity<List<Map<String, Object>>> getActiveRoutes() {
         // Scan Redis for all last_state:* keys
         Set<String> stateKeys = redis.keys("last_state:*");
