@@ -3,6 +3,7 @@ package kz.ktj.digitaltwin.gateway.controllers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,7 +40,7 @@ public class RoutesController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Список активных маршрутов (JSON с динамическими полями)",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = java.util.Map.class)))
+                                    array = @ArraySchema(schema = @Schema(implementation = java.util.Map.class))))
             }
     )
     public ResponseEntity<List<Map<String, Object>>> getActiveRoutes() {

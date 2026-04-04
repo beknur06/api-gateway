@@ -2,6 +2,7 @@ package kz.ktj.digitaltwin.gateway.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,7 +34,7 @@ public class LocomotiveController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Список локомотивов",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = Locomotive.class)))
+                                    array = @ArraySchema(schema = @Schema(implementation = Locomotive.class))))
             }
     )
     public List<Locomotive> list() {

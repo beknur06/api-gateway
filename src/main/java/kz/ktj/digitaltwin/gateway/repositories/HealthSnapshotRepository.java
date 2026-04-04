@@ -10,10 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.List;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 @Repository
-@Tag(name = "Repositories", description = "DAO слой (не REST). В Swagger UI обычно не отображается.")
 public interface HealthSnapshotRepository extends JpaRepository<HealthSnapshot, Long> {
 
     @Query("""
