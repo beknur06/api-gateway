@@ -77,8 +77,8 @@ public class RoutesController {
                 if (params == null) params = state.get("rawParameters");
                 if (params != null) {
                     route.put("speed",     numOrNull(params, "speed"));
-                    Double fuelLevel = numOrNull(params, "fuel_level");
-                    route.put("fuelLevel", fuelLevel != null ? (fuelLevel / 6000.0) * 100.0 : null);                }
+                    route.put("fuelLevel", numOrNull(params, "fuel_level"));
+                }
 
                 route.put("gpsLat",   numOrNull(state, "gpsLat"));
                 route.put("gpsLon",   numOrNull(state, "gpsLon"));
