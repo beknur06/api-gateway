@@ -22,12 +22,6 @@ import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.*;
 
-/**
- * History & export endpoints for the Replay screen (second screenshot).
- *
- * GET /api/v1/history/{locomotiveId}          — telemetry for replay timeline
- * GET /api/v1/history/{locomotiveId}/export   — CSV download for report
- */
 @RestController
 @RequestMapping("/api/v1/history")
 @Tag(name = "History", description = "История телеметрии и экспорт (replay/report)")
@@ -40,15 +34,6 @@ public class HistoryController {
         this.clickHouse = clickHouseDataSource;
     }
 
-    /**
-     * GET /api/v1/history/{locomotiveId}?from=...&to=...&resolution=raw|1min
-     *
-     * Returns telemetry grouped by timestamp for replay:
-     * [
-     *   { "timestamp": "...", "speed": 82.3, "coolant_temp": 76.1, ... },
-     *   ...
-     * ]
-     */
     @GetMapping("/{locomotiveId}")
     @Operation(
             summary = "История телеметрии для replay",
@@ -84,11 +69,6 @@ public class HistoryController {
         }
     }
 
-    /**
-     * GET /api/v1/history/{locomotiveId}/export?from=...&to=...&format=csv
-     *
-     * Downloads CSV file with all parameters for the time window.
-     */
     @GetMapping("/{locomotiveId}/export")
     @Operation(
             summary = "Экспорт телеметрии в CSV",
@@ -147,9 +127,6 @@ public class HistoryController {
         }
     }
 
-    /**
-     * Raw data query — pivots rows into columnar JSON per timestamp.
-     */
     private List<Map<String, Object>> queryRaw(String locomotiveId, Instant from, Instant to)
             throws Exception {
 
@@ -188,9 +165,6 @@ public class HistoryController {
         return new ArrayList<>(grouped.values());
     }
 
-    /**
-     * 1-min aggregated query for longer time windows.
-     */
     private List<Map<String, Object>> queryAggregated(String locomotiveId, Instant from, Instant to)
             throws Exception {
 

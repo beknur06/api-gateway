@@ -28,15 +28,12 @@ public class Route {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    /** Идентификатор маршрута из симулятора, например "ASTANA-ALMATY" */
     @Column(name = "route_id", nullable = false, length = 50, unique = true)
     private String routeId;
 
-    /** Отображаемое название маршрута */
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    /** Полная длина маршрута в км (симуляционная шкала) */
     @Column(name = "total_km", nullable = false)
     private double totalKm;
 

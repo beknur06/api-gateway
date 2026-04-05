@@ -16,23 +16,6 @@ import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * WebSocket handler: bridges Redis pub/sub → WebSocket → frontend.
- *
- * Frontend connects:
- *   ws://gateway:8080/ws/telemetry?locomotiveId=KZ8A-0042
- *
- * On connect:
- *   1. Send initial snapshot (GET last_state:{locoId} from Redis)
- *   2. Subscribe to Redis channels: telemetry:{locoId}, health:{locoId}, alerts:{locoId}
- *   3. Forward every Redis message as WS text frame
- *
- * On disconnect:
- *   Unsubscribe from Redis channels, cleanup.
- *
- * Message format to client:
- *   { "type": "TELEMETRY|HEALTH_INDEX|ALERT", "data": {...} }
- */
 @Component
 public class TelemetryWebSocketHandler extends TextWebSocketHandler {
 
@@ -41,7 +24,6 @@ public class TelemetryWebSocketHandler extends TextWebSocketHandler {
     private final StringRedisTemplate redis;
     private final RedisMessageListenerContainer listenerContainer;
 
-    /** session → list of Redis subscriptions (for cleanup) */
     private final Map<String, SessionSubscriptions> sessions = new ConcurrentHashMap<>();
 
     public TelemetryWebSocketHandler(StringRedisTemplate redis,
@@ -60,22 +42,16 @@ public class TelemetryWebSocketHandler extends TextWebSocketHandler {
 
         log.info("WS connected: session={} locomotive={}", session.getId(), locomotiveId);
 
-        // 1. Send initial snapshot
         sendSnapshot(session, locomotiveId);
 
-        // 2. Subscribe to Redis channels and bridge to WS
         SessionSubscriptions subs = new SessionSubscriptions(locomotiveId);
-
         subs.telemetryListener = createBridgeListener(session, "TELEMETRY");
-        subs.healthListener = createBridgeListener(session, "HEALTH_INDEX");
-        subs.alertListener = createBridgeListener(session, "ALERT");
+        subs.healthListener    = createBridgeListener(session, "HEALTH_INDEX");
+        subs.alertListener     = createBridgeListener(session, "ALERT");
 
-        listenerContainer.addMessageListener(subs.telemetryListener,
-            new ChannelTopic("telemetry:" + locomotiveId));
-        listenerContainer.addMessageListener(subs.healthListener,
-            new ChannelTopic("health:" + locomotiveId));
-        listenerContainer.addMessageListener(subs.alertListener,
-            new ChannelTopic("alerts:" + locomotiveId));
+        listenerContainer.addMessageListener(subs.telemetryListener, new ChannelTopic("telemetry:" + locomotiveId));
+        listenerContainer.addMessageListener(subs.healthListener,    new ChannelTopic("health:" + locomotiveId));
+        listenerContainer.addMessageListener(subs.alertListener,     new ChannelTopic("alerts:" + locomotiveId));
 
         sessions.put(session.getId(), subs);
     }
@@ -93,8 +69,6 @@ public class TelemetryWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
-        // Client can send: { "action": "ping" } for keepalive
-        // or { "action": "subscribe", "locomotiveId": "..." } to switch locomotive
         log.trace("WS received from {}: {}", session.getId(), message.getPayload());
     }
 
@@ -103,47 +77,34 @@ public class TelemetryWebSocketHandler extends TextWebSocketHandler {
         log.warn("WS transport error: session={} error={}", session.getId(), exception.getMessage());
     }
 
-    // ─── Helpers ───
-
     private void sendSnapshot(WebSocketSession session, String locomotiveId) throws IOException {
-        // Send last telemetry state
         String telemetryState = redis.opsForValue().get("last_state:" + locomotiveId);
-        if (telemetryState != null) {
-            sendWrapped(session, "TELEMETRY_SNAPSHOT", telemetryState);
-        }
+        if (telemetryState != null) sendWrapped(session, "TELEMETRY_SNAPSHOT", telemetryState);
 
-        // Send last health index
         String healthState = redis.opsForValue().get("health_index:" + locomotiveId);
-        if (healthState != null) {
-            sendWrapped(session, "HEALTH_INDEX_SNAPSHOT", healthState);
-        }
+        if (healthState != null) sendWrapped(session, "HEALTH_INDEX_SNAPSHOT", healthState);
     }
 
     private MessageListener createBridgeListener(WebSocketSession session, String type) {
         return (message, pattern) -> {
             if (!session.isOpen()) return;
             try {
-                String payload = new String(message.getBody());
-                sendWrapped(session, type, payload);
+                sendWrapped(session, type, new String(message.getBody()));
             } catch (IOException e) {
                 log.warn("Failed to send WS message: {}", e.getMessage());
             }
         };
     }
 
-    private synchronized void sendWrapped(WebSocketSession session, String type, String data)
-            throws IOException {
+    private synchronized void sendWrapped(WebSocketSession session, String type, String data) throws IOException {
         if (!session.isOpen()) return;
-        String wrapped = "{\"type\":\"" + type + "\",\"data\":" + data + "}";
-        session.sendMessage(new TextMessage(wrapped));
+        session.sendMessage(new TextMessage("{\"type\":\"" + type + "\",\"data\":" + data + "}"));
     }
 
     private String extractLocomotiveId(WebSocketSession session) {
         URI uri = session.getUri();
         if (uri == null) return null;
-        Map<String, String> params = UriComponentsBuilder.fromUri(uri).build()
-            .getQueryParams().toSingleValueMap();
-        return params.get("locomotiveId");
+        return UriComponentsBuilder.fromUri(uri).build().getQueryParams().toSingleValueMap().get("locomotiveId");
     }
 
     private static class SessionSubscriptions {

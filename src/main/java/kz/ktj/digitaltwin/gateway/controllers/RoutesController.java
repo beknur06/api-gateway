@@ -106,10 +106,6 @@ public class RoutesController {
         return ResponseEntity.ok(routes);
     }
 
-    /**
-     * Дополняет карту маршрута данными о прогрессе из PostgreSQL:
-     * routeWaypoints, routeTotalKm, routeProgressPct, currentSegmentFrom, currentSegmentTo.
-     */
     private void enrichWithRouteProgress(Map<String, Object> route) {
         String routeId  = (String) route.get("routeId");
         Double odometer = (Double) route.get("odometer");
@@ -135,7 +131,6 @@ public class RoutesController {
                 })
                 .collect(Collectors.toList());
 
-            // Текущий сегмент: между какими городами находится локомотив
             List<RouteWaypointDto> wps = def.getWaypoints();
             String segFrom = wps.get(0).getCityName();
             String segTo   = wps.get(wps.size() - 1).getCityName();
