@@ -15,6 +15,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,7 +32,7 @@ public class HistoryController {
     private static final Logger log = LoggerFactory.getLogger(HistoryController.class);
     private final DataSource clickHouse;
 
-    public HistoryController(DataSource clickHouseDataSource) {
+    public HistoryController(@Qualifier("clickHouseDataSource") DataSource clickHouseDataSource) {
         this.clickHouse = clickHouseDataSource;
     }
 
