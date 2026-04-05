@@ -2,6 +2,8 @@ package kz.ktj.digitaltwin.gateway.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kz.ktj.digitaltwin.gateway.repositories.AlertRepository;
+import kz.ktj.digitaltwin.gateway.repositories.HealthSnapshotRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,17 +20,23 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@Tag(name = "Admin", description = "Очистка данных ClickHouse и Redis")
+@Tag(name = "Admin", description = "Очистка данных ClickHouse, Redis и PostgreSQL")
 public class AdminController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private final DataSource clickHouse;
+    private final AlertRepository alertRepository;
+    private final HealthSnapshotRepository healthSnapshotRepository;
     private final StringRedisTemplate redis;
 
     public AdminController(@Qualifier("clickHouseDataSource") DataSource clickHouseDataSource,
+                           AlertRepository alertRepository,
+                           HealthSnapshotRepository healthSnapshotRepository,
                            StringRedisTemplate redis) {
         this.clickHouse = clickHouseDataSource;
+        this.alertRepository = alertRepository;
+        this.healthSnapshotRepository = healthSnapshotRepository;
         this.redis = redis;
     }
 
@@ -51,13 +59,7 @@ public class AdminController {
     @Operation(summary = "Очистить кэш телеметрии и health index в Redis")
     public ResponseEntity<String> clearRedis() {
         try {
-            Set<String> keys = redis.keys("last_state:*");
-            if (keys != null && !keys.isEmpty()) redis.delete(keys);
-
-            Set<String> healthKeys = redis.keys("health_index:*");
-            if (healthKeys != null && !healthKeys.isEmpty()) redis.delete(healthKeys);
-
-            int total = (keys == null ? 0 : keys.size()) + (healthKeys == null ? 0 : healthKeys.size());
+            int total = deleteRedisKeys();
             log.info("Redis cleared: {} keys deleted", total);
             return ResponseEntity.ok("Redis cleared: " + total + " keys deleted");
         } catch (Exception e) {
@@ -66,8 +68,22 @@ public class AdminController {
         }
     }
 
+    @DeleteMapping("/postgres")
+    @Operation(summary = "Очистить таблицы alerts и health_snapshots в PostgreSQL")
+    public ResponseEntity<String> clearPostgres() {
+        try {
+            alertRepository.deleteAll();
+            healthSnapshotRepository.deleteAll();
+            log.info("PostgreSQL tables cleared");
+            return ResponseEntity.ok("PostgreSQL cleared: alerts, health_snapshots");
+        } catch (Exception e) {
+            log.error("Failed to clear PostgreSQL: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("Failed: " + e.getMessage());
+        }
+    }
+
     @DeleteMapping("/all")
-    @Operation(summary = "Очистить ClickHouse и Redis одним запросом")
+    @Operation(summary = "Очистить ClickHouse, Redis и PostgreSQL одним запросом")
     public ResponseEntity<String> clearAll() {
         StringBuilder result = new StringBuilder();
 
@@ -82,20 +98,33 @@ public class AdminController {
         }
 
         try {
-            Set<String> keys = redis.keys("last_state:*");
-            if (keys != null && !keys.isEmpty()) redis.delete(keys);
-
-            Set<String> healthKeys = redis.keys("health_index:*");
-            if (healthKeys != null && !healthKeys.isEmpty()) redis.delete(healthKeys);
-
-            int total = (keys == null ? 0 : keys.size()) + (healthKeys == null ? 0 : healthKeys.size());
-            result.append("Redis: ").append(total).append(" keys deleted.");
+            int total = deleteRedisKeys();
+            result.append("Redis: ").append(total).append(" keys deleted. ");
         } catch (Exception e) {
             log.error("Failed to clear Redis: {}", e.getMessage());
-            result.append("Redis: FAILED (").append(e.getMessage()).append(").");
+            result.append("Redis: FAILED (").append(e.getMessage()).append("). ");
+        }
+
+        try {
+            alertRepository.deleteAll();
+            healthSnapshotRepository.deleteAll();
+            result.append("PostgreSQL: cleared.");
+        } catch (Exception e) {
+            log.error("Failed to clear PostgreSQL: {}", e.getMessage());
+            result.append("PostgreSQL: FAILED (").append(e.getMessage()).append(").");
         }
 
         log.info("Admin clear all: {}", result);
         return ResponseEntity.ok(result.toString());
+    }
+
+    private int deleteRedisKeys() {
+        Set<String> keys = redis.keys("last_state:*");
+        if (keys != null && !keys.isEmpty()) redis.delete(keys);
+
+        Set<String> healthKeys = redis.keys("health_index:*");
+        if (healthKeys != null && !healthKeys.isEmpty()) redis.delete(healthKeys);
+
+        return (keys == null ? 0 : keys.size()) + (healthKeys == null ? 0 : healthKeys.size());
     }
 }
