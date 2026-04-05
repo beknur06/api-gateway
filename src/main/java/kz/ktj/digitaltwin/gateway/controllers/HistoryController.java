@@ -182,8 +182,8 @@ public class HistoryController {
         try (Connection conn = clickHouse.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, locomotiveId);
-            ps.setTimestamp(2, java.sql.Timestamp.from(from));
-            ps.setTimestamp(3, java.sql.Timestamp.from(to));
+            ps.setLong(2, from.getEpochSecond());
+            ps.setLong(3, to.getEpochSecond());
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
